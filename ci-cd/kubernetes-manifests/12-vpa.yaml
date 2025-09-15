@@ -1,0 +1,74 @@
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: acme-wp-api-vpa
+  namespace: acme-wp
+  labels:
+    app: acme-wp
+    component: api
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acme-wp-api
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+    - containerName: api
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: acme-wp-frontend-vpa
+  namespace: acme-wp
+  labels:
+    app: acme-wp
+    component: frontend
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acme-wp-frontend
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+    - containerName: frontend
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: acme-wp-db-vpa
+  namespace: acme-wp
+  labels:
+    app: acme-wp
+    component: database
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acme-wp-db
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+    - containerName: database
+      maxAllowed:
+        cpu: 2000m
+        memory: 4Gi
+      minAllowed:
+        cpu: 200m
+        memory: 256Mi

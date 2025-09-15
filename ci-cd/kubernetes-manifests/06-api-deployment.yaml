@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-wp-api
+  namespace: acme-wp
+  labels:
+    app: acme-wp
+    component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acme-wp
+      component: api
+  template:
+    metadata:
+      labels:
+        app: acme-wp
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: docker.io/atonuiitdu/acme-wp-api-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: DB_HOST
+              value: "acme-wp-db"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "wordpress"
+            - name: DB_USER
+              value: "wordpress"
+            - name: DB_PASSWORD
+              value: "wordpress"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - name: acme-wp-api
+              mountPath: /var/www/html/
+      volumes:
+        - name: acme-wp-api
+          persistentVolumeClaim:
+            claimName: acme-wp-api

@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-wp-db
+  namespace: acme-wp
+  labels:
+    app: acme-wp
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: acme-wp
+      component: database
+  template:
+    metadata:
+      labels:
+        app: acme-wp
+        component: database
+    spec:
+      containers:
+        - name: database
+          image: docker.io/atonuiitdu/acme-wp-db-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "rootpassword"
+            - name: MYSQL_DATABASE
+              value: "wordpress"
+            - name: MYSQL_USER
+              value: "wordpress"
+            - name: MYSQL_PASSWORD
+              value: "wordpress"
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mysql
+                - -h
+                - localhost
+                - -uwordpress
+                - -pwordpress
+                - -e
+                - "SELECT 1"
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 3
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 250m
+              memory: 512Mi
+          volumeMounts:
+            - name: acme-wp-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: acme-wp-data
+          persistentVolumeClaim:
+            claimName: acme-wp-data
