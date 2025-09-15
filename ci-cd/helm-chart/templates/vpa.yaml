@@ -1,0 +1,73 @@
+{{- if .Values.vpa.enabled }}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-api-vpa
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: api
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "acme-wp.fullname" . }}-api
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: api
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-frontend-vpa
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: frontend
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "acme-wp.fullname" . }}-frontend
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: frontend
+      maxAllowed:
+        cpu: 1000m
+        memory: 2Gi
+      minAllowed:
+        cpu: 100m
+        memory: 128Mi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-db-vpa
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: database
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "acme-wp.fullname" . }}-db
+  updatePolicy:
+    updateMode: {{ .Values.vpa.updateMode }}
+  resourcePolicy:
+    containerPolicies:
+    - containerName: database
+      maxAllowed:
+        cpu: 2000m
+        memory: 4Gi
+      minAllowed:
+        cpu: 200m
+        memory: 256Mi
+{{- end }}

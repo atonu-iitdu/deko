@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-api
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.service.apiPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "acme-wp.selectorLabels" . | nindent 4 }}
+    component: api

@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-db
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "acme-wp.selectorLabels" . | nindent 6 }}
+      component: database
+  template:
+    metadata:
+      annotations:
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "acme-wp.selectorLabels" . | nindent 8 }}
+        component: database
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "acme-wp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: database
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.database.image.repository }}:{{ .Values.database.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.database.image.pullPolicy }}
+          ports:
+            - name: mysql
+              containerPort: 3306
+              protocol: TCP
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: {{ .Values.database.env.MYSQL_ROOT_PASSWORD | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.database.env.MYSQL_DATABASE | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.database.env.MYSQL_USER | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.database.env.MYSQL_PASSWORD | quote }}
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - mysql
+                - -h
+                - localhost
+                - -u{{ .Values.database.env.MYSQL_USER }}
+                - -p{{ .Values.database.env.MYSQL_PASSWORD }}
+                - -e
+                - "SELECT 1"
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 1
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.database.resources | nindent 12 }}
+          volumeMounts:
+            - name: acme-wp-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: acme-wp-data
+          {{- if .Values.database.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "acme-wp.fullname" . }}-db-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

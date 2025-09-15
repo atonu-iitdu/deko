@@ -1,0 +1,18 @@
+{{- if .Values.frontend.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "acme-wp.fullname" . }}-frontend-pvc
+  labels:
+    {{- include "acme-wp.labels" . | nindent 4 }}
+    component: frontend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.frontend.persistence.size }}
+  {{- if .Values.frontend.persistence.storageClass }}
+  storageClassName: {{ .Values.frontend.persistence.storageClass }}
+  {{- end }}
+{{- end }}
