@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: acme-wp
+  namespace: argocd
+  labels:
+    app: acme-wp
+    tier: web
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+    targetRevision: HEAD
+    path: ci-cd/helm-chart
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: ingress.hosts[0].host
+          value: deko.sdlbdcloud.com
+        - name: metallb.ipRange
+          value: "192.168.122.210-192.168.122.220"
+        - name: database.env.MYSQL_ROOT_PASSWORD
+          value: "secure-root-password"
+        - name: database.env.MYSQL_PASSWORD
+          value: "secure-db-password"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: acme-wp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
